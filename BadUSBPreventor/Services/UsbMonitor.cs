@@ -22,7 +22,7 @@ public class UsbMonitor : IDisposable
         WqlEventQuery query = new WqlEventQuery(
             "__InstanceCreationEvent",
             new TimeSpan(0, 0, 1),
-            "TargetInstance ISA 'Win32_USBHub'");
+            "TargetInstance ISA 'Win32_PnPEntity'");
 
         _watcher = new ManagementEventWatcher(query);
         _watcher.EventArrived += OnEventArrived;
