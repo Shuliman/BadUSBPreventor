@@ -1,47 +1,59 @@
-﻿namespace BadUSBPreventor;
+﻿using System;
+using System.Runtime.InteropServices;
+using BadUSBPreventor.Services;
 
-using System;
-using System.Management;
-
-class Program
+namespace BadUSBPreventor
 {
-    static void Main(string[] args)
+    /// <summary>
+    /// Main program entry point.
+    /// </summary>
+    class Program
     {
-        Console.WriteLine("Starting USB device monitoring...");
-
-// Create a query to track new USB devices.
-// You can change the filter in the query to more accurately select the desired class of devices.
-        WqlEventQuery query = new WqlEventQuery(
-            "__InstanceCreationEvent",
-            new TimeSpan(0, 0, 1),
-            "TargetInstance ISA 'Win32_USBHub'");
-
-        using (ManagementEventWatcher watcher = new ManagementEventWatcher(query))
+        static void Main(string[] args)
         {
-            watcher.EventArrived += DeviceInsertedEvent;
-            watcher.Start();
+            // Validate platform compatibility (Windows only)
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Console.WriteLine("This application is designed to run on Windows.");
+                return;
+            }
 
-            Console.WriteLine("Waiting for devices to connect. Press any key to exit...");
+            // Parse command-line arguments
+            var config = AppConfig.ParseArguments(args);
+            if (config.ShowHelp)
+            {
+                AppConfig.PrintUsage();
+                return;
+            }
+
+            Logger.LogInfo("Starting USB device monitoring...");
+
+            using var monitor = new UsbMonitor();
+            // Subscribe to the device insertion event.
+            monitor.DeviceInserted += (sender, device) =>
+            {
+                // If the "--only-suspicious" flag is set, filter out non-suspicious devices.
+                if (config.OnlySuspicious && !DeviceAnalyzer.IsSuspicious(device))
+                {
+                    return;
+                }
+
+                Logger.LogInfo("New USB device detected:");
+                Logger.LogInfo(device.ToString());
+
+                // Additional processing can be added here (e.g., compare against a whitelist).
+                if (DeviceAnalyzer.IsSuspicious(device))
+                {
+                    Logger.LogWarning("Suspicious device detected!");
+                }
+            };
+
+            monitor.Start();
+
+            Logger.LogInfo("Monitoring USB devices. Press any key to exit...");
             Console.ReadKey();
 
-            watcher.Stop();
+            monitor.Stop();
         }
-    }
-
-    private static void DeviceInsertedEvent(object sender, EventArrivedEventArgs e)
-    {
-// Get an object describing the device
-        ManagementBaseObject instance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
-        string deviceId = instance["DeviceID"]?.ToString() ?? "No data";
-        string description = instance["Description"]?.ToString() ?? "No description";
-
-        Console.WriteLine("New USB device detected:");
-        Console.WriteLine($"DeviceID: {deviceId}");
-        Console.WriteLine($"Description: {description}");
-
-// TODO - analyse
-// - Determine device class (e.g. if description or other fields contain HID hint).
-// - Extract VendorID and ProductID from deviceId string.
-// - Compare with whitelist.
     }
 }
