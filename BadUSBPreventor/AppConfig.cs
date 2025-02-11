@@ -1,3 +1,5 @@
+using BadUSBPreventor.Enums;
+
 namespace BadUSBPreventor;
 
 /// <summary>
@@ -7,6 +9,7 @@ public class AppConfig
 {
     public bool ShowHelp { get; private set; }
     public bool OnlySuspicious { get; private set; }
+    public LoggingMode LogMode { get; private set; } = LoggingMode.Brief;
 
     public static AppConfig ParseArguments(string[] args)
     {
@@ -23,7 +26,9 @@ public class AppConfig
                 case "--only-suspicious":
                     config.OnlySuspicious = true;
                     break;
-                // Additional arguments can be processed here.
+                case "--verbose":
+                    config.LogMode = LoggingMode.Detailed;
+                    break;
             }
         }
         return config;
@@ -35,6 +40,6 @@ public class AppConfig
         Console.WriteLine("Options:");
         Console.WriteLine("  --help, -h           Show this help message and exit");
         Console.WriteLine("  --only-suspicious    Display only suspicious USB devices");
-        // Extend with additional options if needed.
+        Console.WriteLine("  --verbose            Use detailed logging mode (full WMI data)");
     }
 }

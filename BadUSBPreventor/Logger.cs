@@ -1,3 +1,5 @@
+using BadUSBPreventor.Enums;
+
 namespace BadUSBPreventor;
 
 /// <summary>
@@ -5,18 +7,29 @@ namespace BadUSBPreventor;
 /// </summary>
 public static class Logger
 {
-    public static void LogInfo(string message)
+    private static LoggingMode _logMode = LoggingMode.Brief;
+    
+    public static void Init(LoggingMode mode)
     {
-        Console.WriteLine("[INFO] " + message);
+        _logMode = mode;
     }
 
-    public static void LogWarning(string message)
+    public static void Info(string message)
     {
-        Console.WriteLine("[WARNING] " + message);
+        Console.WriteLine($"[INFO] {message}");
     }
 
-    public static void LogError(string message)
+    // Метод для вывода подробных логов – срабатывает только в Detailed режиме.
+    public static void Detailed(string message)
     {
-        Console.WriteLine("[ERROR] " + message);
+        if (_logMode == LoggingMode.Detailed)
+        {
+            Console.WriteLine($"[DETAIL] {message}");
+        }
+    }
+
+    public static void Warning(string message)
+    {
+        Console.WriteLine($"[WARNING] {message}");
     }
 }
