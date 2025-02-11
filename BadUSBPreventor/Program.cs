@@ -1,5 +1,5 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+using BadUSBPreventor.Models;
 using BadUSBPreventor.Services;
 
 namespace BadUSBPreventor
@@ -7,53 +7,68 @@ namespace BadUSBPreventor
     /// <summary>
     /// Main program entry point.
     /// </summary>
-    class Program
+    static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            // Validate platform compatibility (Windows only)
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Console.WriteLine("This application is designed to run on Windows.");
+            if (!IsWindows())
                 return;
-            }
 
-            // Parse command-line arguments
-            var config = AppConfig.ParseArguments(args);
+            var config = SetupConfig(args);
             if (config.ShowHelp)
-            {
-                AppConfig.PrintUsage();
                 return;
-            }
 
-            Logger.LogInfo("Starting USB device monitoring...");
+            Logger.Init(config.LogMode);
+            Logger.Info("Starting USB device monitoring...");
 
-            using var monitor = new UsbMonitor();
-            // Subscribe to the device insertion event.
-            monitor.DeviceInserted += (sender, device) =>
-            {
-                // If the "--only-suspicious" flag is set, filter out non-suspicious devices.
-                if (config.OnlySuspicious && !DeviceAnalyzer.IsSuspicious(device))
-                {
-                    return;
-                }
-
-                Logger.LogInfo("New USB device detected:");
-                Logger.LogInfo(device.ToString());
-
-                // Additional processing can be added here (e.g., compare against a whitelist).
-                if (DeviceAnalyzer.IsSuspicious(device))
-                {
-                    Logger.LogWarning("Suspicious device detected!");
-                }
-            };
-
+            using var monitor = CreateUsbMonitor(config);
             monitor.Start();
 
-            Logger.LogInfo("Monitoring USB devices. Press any key to exit...");
+            Logger.Info("Monitoring USB devices. Press any key to exit...");
             Console.ReadKey();
 
             monitor.Stop();
         }
+
+        private static bool IsWindows()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Console.WriteLine("This application is designed to run on Windows.");
+                return false;
+            }
+            return true;
+        }
+
+        private static AppConfig SetupConfig(string[] args)
+        {
+            var config = AppConfig.ParseArguments(args);
+            if (config.ShowHelp)
+            {
+                AppConfig.PrintUsage();
+            }
+            return config;
+        }
+
+        private static UsbMonitor CreateUsbMonitor(AppConfig config)
+        {
+            var monitor = new UsbMonitor();
+            monitor.DeviceInserted += (sender, device) => HandleDeviceInserted(device, config);
+            return monitor;
+        }
+
+        private static void HandleDeviceInserted(UsbDeviceInfo device, AppConfig config)
+
+        {
+            if (config.OnlySuspicious && !DeviceAnalyzer.IsSuspicious(device))
+                return;
+
+            Logger.Info("New USB device detected:");
+            Logger.Info(device.ToString());
+
+            if (DeviceAnalyzer.IsSuspicious(device))
+                Logger.Warning("Suspicious device detected!");
+        }
+
     }
 }
