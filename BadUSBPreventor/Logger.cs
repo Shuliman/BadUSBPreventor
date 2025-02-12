@@ -18,8 +18,7 @@ public static class Logger
     {
         Console.WriteLine($"[INFO] {message}");
     }
-
-    // Метод для вывода подробных логов – срабатывает только в Detailed режиме.
+    
     public static void Detailed(string message)
     {
         if (_logMode == LoggingMode.Detailed)
