@@ -58,13 +58,12 @@ namespace BadUSBPreventor
         }
 
         private static void HandleDeviceInserted(UsbDeviceInfo device, AppConfig config)
-
         {
             if (config.OnlySuspicious && !DeviceAnalyzer.IsSuspicious(device))
                 return;
 
             Logger.Info("New USB device detected:");
-            Logger.Info(device.ToString());
+            Logger.LogDevice(device);
 
             if (DeviceAnalyzer.IsSuspicious(device))
                 Logger.Warning("Suspicious device detected!");

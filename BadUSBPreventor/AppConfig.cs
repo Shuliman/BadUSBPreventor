@@ -27,7 +27,11 @@ public class AppConfig
                     config.OnlySuspicious = true;
                     break;
                 case "--verbose":
+                case "--full":
                     config.LogMode = LoggingMode.Detailed;
+                    break;
+                case "--brief": 
+                    config.LogMode = LoggingMode.Brief;
                     break;
             }
         }
@@ -40,6 +44,9 @@ public class AppConfig
         Console.WriteLine("Options:");
         Console.WriteLine("  --help, -h           Show this help message and exit");
         Console.WriteLine("  --only-suspicious    Display only suspicious USB devices");
-        Console.WriteLine("  --verbose            Use detailed logging mode (full WMI data)");
+        Console.WriteLine("  --verbose, --full    Use detailed logging mode (full WMI data)");
+        Console.WriteLine("  --brief              Use brief logging mode (default)");
+        Console.WriteLine();
+        Console.WriteLine("Note: If no logging option is provided, brief mode is used by default.");
     }
 }

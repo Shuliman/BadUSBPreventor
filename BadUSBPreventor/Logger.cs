@@ -1,4 +1,5 @@
 using BadUSBPreventor.Enums;
+using BadUSBPreventor.Models;
 
 namespace BadUSBPreventor;
 
@@ -7,7 +8,7 @@ namespace BadUSBPreventor;
 /// </summary>
 public static class Logger
 {
-    private static LoggingMode _logMode = LoggingMode.Brief;
+    private static LoggingMode _logMode;
     
     public static void Init(LoggingMode mode)
     {
@@ -30,5 +31,11 @@ public static class Logger
     public static void Warning(string message)
     {
         Console.WriteLine($"[WARNING] {message}");
+    }
+    
+    public static void LogDevice(UsbDeviceInfo device)
+    {
+        //Detecting and applying LogMode settings  
+        Info(_logMode == LoggingMode.Detailed ? device.ToString() : device.ToStringBrief());
     }
 }
